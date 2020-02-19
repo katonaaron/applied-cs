@@ -19,8 +19,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 public class AnagramDictionary {
 
@@ -28,12 +33,26 @@ public class AnagramDictionary {
     private static final int DEFAULT_WORD_LENGTH = 3;
     private static final int MAX_WORD_LENGTH = 7;
     private Random random = new Random();
+    private List<String> wordList = new ArrayList<>();
+    private Set<String> wordSet = new HashSet<>();
+    private Map<String, List<String>> lettersToWords = new HashMap<>();
 
     public AnagramDictionary(Reader reader) throws IOException {
         BufferedReader in = new BufferedReader(reader);
         String line;
-        while((line = in.readLine()) != null) {
+        while ((line = in.readLine()) != null) {
             String word = line.trim();
+
+            wordList.add(word);
+            wordSet.add(word);
+
+            String letters = sortLetters(word);
+            List<String> words = lettersToWords.get(letters);
+            if (words == null) {
+                lettersToWords.put(letters, new ArrayList<>(Arrays.asList(word)));
+            } else {
+                words.add(word);
+            }
         }
     }
 
@@ -42,8 +61,22 @@ public class AnagramDictionary {
     }
 
     public List<String> getAnagrams(String targetWord) {
-        ArrayList<String> result = new ArrayList<String>();
+        String letters = sortLetters(targetWord);
+        List<String> words = lettersToWords.get(letters);
+
+        if (words == null) {
+            return new ArrayList<>();
+        }
+
+        ArrayList<String> result = new ArrayList<>(words);
+        result.remove(targetWord);
         return result;
+    }
+
+    private String sortLetters(String word) {
+        char[] chars = word.toCharArray();
+        Arrays.sort(chars);
+        return new String(chars);
     }
 
     public List<String> getAnagramsWithOneMoreLetter(String word) {
@@ -52,6 +85,6 @@ public class AnagramDictionary {
     }
 
     public String pickGoodStarterWord() {
-        return "stop";
+        return "skate";
     }
 }
