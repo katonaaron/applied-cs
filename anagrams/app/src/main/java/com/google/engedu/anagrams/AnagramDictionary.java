@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class AnagramDictionary {
 
@@ -33,9 +34,11 @@ public class AnagramDictionary {
     private static final int DEFAULT_WORD_LENGTH = 3;
     private static final int MAX_WORD_LENGTH = 7;
     private Random random = new Random();
+    private int wordLength = DEFAULT_WORD_LENGTH;
     private List<String> wordList = new ArrayList<>();
     private Set<String> wordSet = new HashSet<>();
     private Map<String, List<String>> lettersToWords = new HashMap<>();
+    private Map<Integer, List<String>> sizeToWords = new HashMap<>();
 
     public AnagramDictionary(Reader reader) throws IOException {
         BufferedReader in = new BufferedReader(reader);
@@ -46,15 +49,22 @@ public class AnagramDictionary {
             wordList.add(word);
             wordSet.add(word);
 
+            addWordToMap(sizeToWords, word, word.length());
+
             String letters = sortLetters(word);
-            List<String> words = lettersToWords.get(letters);
-            if (words == null) {
-                lettersToWords.put(letters, new ArrayList<>(Arrays.asList(word)));
-            } else {
-                words.add(word);
-            }
+            addWordToMap(lettersToWords, word, letters);
         }
     }
+
+    private <T> void addWordToMap(Map<T, List<String>> map, String word, T key) {
+        List<String> words = map.get(key);
+        if (words == null) {
+            map.put(key, new ArrayList<>(Arrays.asList(word)));
+        } else {
+            words.add(word);
+        }
+    }
+
 
     public boolean isGoodWord(String word, String base) {
         return wordSet.contains(word) && !word.contains(base);
@@ -90,18 +100,18 @@ public class AnagramDictionary {
     }
 
     public String pickGoodStarterWord() {
-        int index = random.nextInt(wordList.size());
-        int endIndex = ((index % wordList.size()) - 1 + wordList.size()) % wordList.size();
-        String word = wordList.get(index);
+        String result = getRandomWordWithMinAnagrams(sizeToWords.get(wordLength));
+        wordLength = wordLength < MAX_WORD_LENGTH ? wordLength + 1 : MAX_WORD_LENGTH;
+        return result;
+    }
 
-        while (index != endIndex && getAnagrams(word).size() <= MIN_NUM_ANAGRAMS) {
-            index = (index + 1) % wordList.size();
-            word = wordList.get(index);
-        }
-
-        if (index == endIndex) {
+    private String getRandomWordWithMinAnagrams(List<String> words) {
+        if (words == null) {
             return null;
         }
-        return word;
+        List<String> candidateWords = words.stream()
+                .filter(word -> getAnagrams(word).size() <= MIN_NUM_ANAGRAMS)
+                .collect(Collectors.toList());
+        return candidateWords.get(random.nextInt(candidateWords.size()));
     }
 }
