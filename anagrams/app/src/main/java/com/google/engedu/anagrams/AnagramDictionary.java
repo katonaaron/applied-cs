@@ -57,7 +57,7 @@ public class AnagramDictionary {
     }
 
     public boolean isGoodWord(String word, String base) {
-        return true;
+        return wordSet.contains(word) && !word.contains(base);
     }
 
     public List<String> getAnagrams(String targetWord) {
@@ -80,11 +80,28 @@ public class AnagramDictionary {
     }
 
     public List<String> getAnagramsWithOneMoreLetter(String word) {
-        ArrayList<String> result = new ArrayList<String>();
+        ArrayList<String> result = new ArrayList<>();
+
+        for (char c = 'a'; c <= 'z'; c++) {
+            result.addAll(getAnagrams(word + c));
+        }
+
         return result;
     }
 
     public String pickGoodStarterWord() {
-        return "skate";
+        int index = random.nextInt(wordList.size());
+        int endIndex = ((index % wordList.size()) - 1 + wordList.size()) % wordList.size();
+        String word = wordList.get(index);
+
+        while (index != endIndex && getAnagrams(word).size() <= MIN_NUM_ANAGRAMS) {
+            index = (index + 1) % wordList.size();
+            word = wordList.get(index);
+        }
+
+        if (index == endIndex) {
+            return null;
+        }
+        return word;
     }
 }
